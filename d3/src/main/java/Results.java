@@ -21,7 +21,7 @@ public class Results {
         }
 
         //task 1 solution
-        System.out.println(sheet.getAmountOfCommonSheetPieces());
+        System.out.println(sheet.getAmountOfOverlappedSheetPieces());
 
         //task 2 solution
         for (ElfsSheetClaim claim : elvesSheetClaims) {

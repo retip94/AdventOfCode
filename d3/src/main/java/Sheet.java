@@ -1,3 +1,4 @@
+
 public class Sheet {
     private int sheetWidth;
     private int sheetLength;
@@ -39,7 +40,7 @@ public class Sheet {
 
 
 
-    int getAmountOfCommonSheetPieces() {
+    int getAmountOfOverlappedSheetPieces() {
         int counter = 0;
         for (int y = 0; y < sheetLength; y++) {
             for (int x = 0; x < sheetWidth; x++) {
