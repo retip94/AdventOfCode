@@ -28,6 +28,21 @@ public class ElfsSheetClaim {
         }
     }
 
+    void markClaimOnSheet(Sheet sheet) {
+        for (int y = inchesFromTop; y < (inchesFromTop + length); y++) {
+            for (int x = inchesFromLeft; x < (inchesFromLeft + width); x++) {
+                sheet.increasePieceOfSheetValue(x,y);
+            }}
+    }
+
+    public boolean checkIfOverlapped(Sheet sheet) {
+        for (int y = inchesFromTop; y < (inchesFromTop + length); y++) {
+            for (int x = inchesFromLeft; x < (inchesFromLeft + width); x++) {
+                if (sheet.getPieceOfSheetValue(x,y)!=1) return true;
+            }}
+        return false;
+    }
+
     public int getId() {
         return id;
     }

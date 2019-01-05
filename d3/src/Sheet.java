@@ -27,25 +27,17 @@ public class Sheet {
         }
     }
 
-    private void increasePieceOfSheetValue(int xCoordinate, int yCoordinate) {
+    public void increasePieceOfSheetValue(int xCoordinate, int yCoordinate) {
         try {
             this.sheetPlan[xCoordinate][yCoordinate]++;
         }
         catch(ArrayIndexOutOfBoundsException exception) {
+            System.out.println("x: "+xCoordinate+" y: "+yCoordinate);
             System.out.println("Array index out of bounds");
         }
     }
 
-    void markClaimOnSheet(ElfsSheetClaim claim) {
-        int startingX = claim.getInchesFromLeft();
-        int startingY = claim.getInchesFromTop();
-        int width = claim.getWidth();
-        int length = claim.getLength();
-        for (int y = startingY; y < (startingY + length); y++) {
-            for (int x = startingX; x < (startingX + width); x++) {
-                increasePieceOfSheetValue(x,y);
-        }}
-    }
+
 
     int getAmountOfCommonSheetPieces() {
         int counter = 0;
