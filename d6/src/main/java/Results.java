@@ -1,70 +1,51 @@
-import java.util.Arrays;
+import java.awt.*;
 
 public class Results {
     public static void main(String[] args) {
         //region input
-        int[][] coordinates = {{1, 1},{1, 6},{8, 3},{3, 4},{5, 5},{8, 9}};
+        int[][] coordinatesInput = {{69, 102},{118, 274},{150, 269},{331, 284},{128, 302},{307, 192},{238, 52},{240, 339},{111, 127},{180, 156},{248, 265},{160, 69},{58, 136},{43, 235},{154, 202},{262, 189},{309, 53},{292, 67},{335, 198},{99, 199},{224, 120},{206, 313},{359, 352},{101, 147},{301, 47},{255, 347},{121, 153},{264, 343},{252, 225},{48, 90},{312, 139},{90, 277},{203, 227},{315, 328},{330, 81},{190, 191},{89, 296},{312, 255},{218, 181},{299, 149},{151, 254},{209, 212},{42, 76},{348, 183},{333, 227},{44, 210},{293, 356},{44, 132},{175, 77},{215, 109}};
+        //endregion
 
-        //create 2D array with size of max coordinates
-        int[] maxCoordinates = getMaxCoordinate(coordinates);
-        int[][] map = new int[maxCoordinates[1] + 1][maxCoordinates[0] + 1];
-
-        for (int i =0;i<coordinates.length;i++) {
-            int x = coordinates[i][0];
-            int y = coordinates[i][1];
-            map[y][x] = i+1;
+        //create points from input
+        Point[] coordinates = new Point[coordinatesInput.length];
+        for (int i = 0; i < coordinatesInput.length; i++) {
+            int x = coordinatesInput[i][0];
+            int y = coordinatesInput[i][1];
+            coordinates[i] = new Point(x, y);
         }
 
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[0].length; j++) {
-                map[i][j] = getClosestCoordinate(new int[]{i, j}, coordinates) + 1;
+        //create 2D mapGrid with size of max coordinates
+        Point maxCoordinates = getMaxCoordinate(coordinates);
+        MapGrid mapGrid = new MapGrid(maxCoordinates.x+1, maxCoordinates.y+1);
+
+        //mark coordinates on map
+        for (int y = 0; y < mapGrid.sizeY; y++) {
+            for (int x = 0; x < mapGrid.sizeX; x++) {
+                mapGrid.markTheMap(x,y,mapGrid.getClosestCoordinate(x,y,coordinates));
             }
         }
-
-        printMap(map);
-
-    }
-
-    public static void printMap(int[][] map) {
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[0].length; j++) {
-                System.out.print(map[i][j]);
-            }
-            System.out.println();
+        //calc area of each index
+        //when area is infinite it will be set to 0
+        int[][] areas = new int[coordinates.length][2];
+        int maxArea = 0;
+        for (int i = 0; i < coordinates.length; i++) {
+            if (mapGrid.checkIfNotOnBorder(i)) {areas[i][1]=0;continue;}
+//            if (mapGrid.checkIfAreaDontTouchMapCorner(i)) {areas[i][1]=0;continue;}
+            areas[i][1] = mapGrid.calcArea(i);
+            if (areas[i][1]>maxArea) maxArea = areas[i][1];
         }
+
+        System.out.println(maxArea);
+
     }
 
-
-
-    public static int calcDistance(int[] from, int[] destination) {
-        int distance = Math.abs(destination[0] - from[1]) + Math.abs(destination[1] - from[0]);
-        return distance;
-    }
-
-    public static int[] getMaxCoordinate(int[][] coordinates) {
+    static Point getMaxCoordinate(Point[] coordinates) {
         int maxX = 0;
         int maxY = 0;
-        for (int[] coordinate : coordinates) {
-            maxX = (coordinate[0] > maxX ? coordinate[0] : maxX);
-            maxY = (coordinate[1] > maxY ? coordinate[1] : maxY);
+        for (Point coordinate : coordinates) {
+            maxX = (coordinate.x > maxX ? coordinate.x : maxX);
+            maxY = (coordinate.y > maxY ? coordinate.y : maxY);
         }
-        return new int[]{maxX, maxY};
-    }
-
-    public static int getClosestCoordinate(int[] point, int[][] coordinates) {
-        int minDistance = 9999999;
-        int closestCoordinate = 0;
-        boolean sameDistance = false;
-        for (int i = 0; i < coordinates.length; i++) {
-            int distance = calcDistance(point, coordinates[i]);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestCoordinate = i;
-                sameDistance = false;   //reset boolean so it only counts for the smallest value
-            } else if (distance == minDistance) {
-                sameDistance = true;
-            }
-        }
-        return (sameDistance ? -1 : closestCoordinate);
+        return new Point(maxX, maxY);
     }
 }
