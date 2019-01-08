@@ -35,7 +35,18 @@ public class Results {
             if (areas[i][1]>maxArea) maxArea = areas[i][1];
         }
 
+        System.out.println("***task 1***");
         System.out.println(maxArea);
+        System.out.println("***task 2***");
+        Region region = new Region(mapGrid.sizeX, mapGrid.sizeY, 10000);
+        for (int y = 0; y < region.sizeY; y++) {
+            for (int x = 0; x < region.sizeX; x++) {
+                int summaryDistance = region.getSummaryDistanceToCoordinates(x,y,coordinates);
+                region.markRegion(x, y, summaryDistance);
+            }
+        }
+        System.out.println(region.markedArea);
+
 
     }
 
