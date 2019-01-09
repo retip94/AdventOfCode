@@ -22,7 +22,7 @@ public class Main {
             char letter = availableLetters.iterator().next();
             correctOrder.append(letter);
             availableLetters.remove(letter);
-            availableLetters.addAll(findNextAvailable(pairs, letter));
+            availableLetters.addAll(findNextAvailable(pairs, letter, availableLetters));
         }
         System.out.println(availableLetters);
         System.out.println(correctOrder.toString());
@@ -39,19 +39,7 @@ public class Main {
         }
         return pairs;
     }
-
-//    static char[][] translateInputToPairs(String[] input) {
-//        char[][] pairs = new char[input.length][2];
-//        for (int i = 0; i < input.length; i++) {
-//            input[i] = input[i].replace("Step ", "");
-//            input[i] = input[i].replace(" must be finished before step ", "");
-//            input[i] = input[i].replace(" can begin.", "");
-//            pairs[i][0] = input[i].charAt(0);
-//            pairs[i][1] = input[i].charAt(1);
-//        }
-//        return pairs;
-//    }
-
+    
     static Set<Character> findFirstLetters(List<char[]> pairs) {
         //if letter doesnt appear at 2nd place in any pair -> it is first letter
         Set<Character> firstLetters = new HashSet<>();
@@ -67,12 +55,22 @@ public class Main {
         return firstLetters;
     }
 
-    static Set<Character> findNextAvailable(List<char[]> pairs, char recentLetter) {
-        Set<Character> availableLetters = new HashSet<>();
+    static Set<Character> findNextAvailable(List<char[]> pairs, char recentLetter, Set<Character> availableLetters) {
+        Set<Character> nextLetters = new HashSet<>();
         for (char[] pair : pairs) {
-            if (recentLetter == pair[0]) availableLetters.add(pair[1]);
+            //find those connected with recent letter
+            if (recentLetter == pair[0]){
+                boolean allConditionsMet = true;
+                for (char[] pair2 : pairs) {
+                    //if one of the pairs is still not done ->dont add this letter
+                    if (pair[1] == pair2[1] && availableLetters.contains(pair2[0])) {
+                        allConditionsMet = false;
+                    }
+                }
+                if (allConditionsMet) nextLetters.add(pair[1]);
+                }
         }
-        return availableLetters;
+        return nextLetters;
     }
 
     }
