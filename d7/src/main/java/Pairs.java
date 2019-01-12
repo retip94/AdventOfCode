@@ -66,4 +66,8 @@ public class Pairs {
         }
     }
 
+    int getSize() {
+        return pairsList.size();
+    }
+
 }
