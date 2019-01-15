@@ -1,5 +1,3 @@
-import java.awt.*;
-
 public class Main {
 
     static int[][] grid = new int[300][300];
@@ -9,8 +7,8 @@ public class Main {
     public static void main(String[] args) {
         long runTime = System.currentTimeMillis();
         assignPowerLevels();
-        Point topFuelCoordinate = findTopFuelCoordinate();
-        System.out.println(topFuelCoordinate.x + "," + topFuelCoordinate.y);
+        PointF topFuelCoordinate = findTopFuelCoordinate();
+        System.out.println(topFuelCoordinate.x + "," + topFuelCoordinate.y+","+topFuelCoordinate.getSquareSize());
         System.out.println("totalPower:" + highestTotalPower);
         System.out.println("Running time: " + (double) (System.currentTimeMillis() - runTime) / 1000 + "s");
     }
@@ -24,26 +22,31 @@ public class Main {
         }
     }
 
-    static Point findTopFuelCoordinate() {
-        Point topFuelCoordinate = new Point();
+    static PointF findTopFuelCoordinate() {
+        PointF topFuelCoordinate = new PointF();
         for (int y = 0; y < (grid.length - 3); y++) {
             for (int x = 0; x < (grid[0].length - 3); x++) {
-                int totalPower = getTotalPower(x,y);
-                if (totalPower > highestTotalPower) {
-                    highestTotalPower = totalPower;
-                    topFuelCoordinate = new Point(x + 1, y + 1);
+                int totalPower = 0;
+                for (int boxSize = 1; (boxSize + y < grid.length && boxSize + x < grid[0].length); boxSize++) {
+                    totalPower = getTotalPower(x,y,boxSize,totalPower);
+                    if (totalPower > highestTotalPower) {
+                        highestTotalPower = totalPower;
+                        topFuelCoordinate = new PointF(x + 1, y + 1, boxSize);
+                    }
                 }
+
             }
         }
         return topFuelCoordinate;
     }
 
-    static int getTotalPower(int x,int y) {
-        int totalPower = 0;
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                totalPower += grid[y + i][x + j];
-            }
+    static int getTotalPower(int x0,int y0, int boxSize, int totalPower) {
+        boxSize--;
+        for (int x = x0; x < x0 + boxSize; x++) {
+            totalPower += grid[y0 + boxSize][x];
+        }
+        for (int y = y0; y <= y0 + boxSize; y++) {
+            totalPower += grid[y][x0 + boxSize];
         }
         return totalPower;
     }
