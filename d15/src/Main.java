@@ -5,12 +5,16 @@ import java.util.List;
 public class Main {
     static String[] input = {"#######", "#.G...#", "#...EG#", "#.#.#G#", "#..G#E#", "#.....#", "#######"};
     static char[][] plan = new char[input.length][input[0].length()];
-    static List<Elf> elves = new ArrayList<>();
+    static List<Unit> elves = new ArrayList<>();
     static List<Goblin> goblins = new ArrayList<>();
     public static void main(String[] args) {
         drawMap();
         int roundsCounter = 0;
-        while (roundsCounter < 100) {
+        while (roundsCounter < 1) {
+            for (Unit unit : getSortedUnits()) {
+                System.out.println(unit.getInfo());
+                System.out.println(unit.checkForOpponentsToAttack());
+            }
 
             roundsCounter++;
         }
@@ -31,14 +35,12 @@ public class Main {
         }
     }
 
-    static List<Unit> getUnits() {
+    static List<Unit> getSortedUnits() {
         List<Unit> units = new ArrayList<>();
-        for (Elf elf : elves) {
-            units.add((Unit) elf);
-        }
-        for (Goblin goblin : goblins) {
-            units.add((Unit) goblin);
-        }
+        units.addAll(elves);
+        units.addAll(goblins);
+        units.sort(Unit::compareTo);
+        return units;
     }
 
 }
