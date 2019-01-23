@@ -14,6 +14,10 @@ public class Main {
             for (Unit unit : getSortedUnits()) {
                 System.out.println(unit.getInfo());
                 System.out.println(unit.checkForOpponentsToAttack());
+                boolean successfulAttack = unit.tryToAttack();
+                if (!successfulAttack) {
+                    unit.findClosestOpponent(getUnits());
+                }
             }
 
             roundsCounter++;
@@ -39,7 +43,13 @@ public class Main {
         List<Unit> units = new ArrayList<>();
         units.addAll(elves);
         units.addAll(goblins);
-        units.sort(Unit::compareTo);
+        units.sort(Unit::compareByPosition);
+        return units;
+    }
+
+    static List<Unit> getUnits() {
+        List<Unit> units = elves;
+        units.addAll(goblins);
         return units;
     }
 
