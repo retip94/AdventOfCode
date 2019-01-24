@@ -1,6 +1,5 @@
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 public abstract class Unit {
@@ -53,50 +52,79 @@ public abstract class Unit {
         this.HP -= damage;
     }
 
-    void tryToMove(List<Unit> units) {
-        
-        findClosestOpponent(units);           <--------- check for nulls
-        move///
+    Pointt tryToMove(List<Unit> units) {
+        Pointt nextPoint = nextMove(units);
+        if (nextPoint != null) {
+            this.pos = nextPoint;
+        }
+        return nextPoint;
     }
 
+
     @Nullable
-    Unit findClosestOpponent(List<Unit> units) {
-        Unit closestUnit = null;
+    Pointt nextMove(List<Unit> units) {
+        Pointt nextPoint = null;
         int minDistance = Integer.MAX_VALUE;
         for (Unit unit : units) {
             if (!this.race.equals(unit.race)) {
-                int distance = findWayToOpponent(unit);
-                if(distance==0)
-                    continue;   //target is not reachable
-                else if (distance < minDistance) {
+                List<Pointt> shortestPath = findShortestPath(unit);
+                int distance = shortestPath.size()-1;
+                if (distance !=-1 && distance < minDistance) {
                     minDistance = distance;
-                    closestUnit = unit;
+                    nextPoint = shortestPath.get(1);
                 }
-                System.out.println(unit);
             }
         }
-        return closestUnit;
+        return nextPoint;
     }
 
-    Integer findWayToOpponent(Unit opponent) {
-        Integer distance = 0;
-        Pointt currentPoint = this.pos;
-        Pointt targetPoint = opponent.pos;
-        List<Pointt> flaggedPoints = new ArrayList<>();
-        while (currentPoint.dist(targetPoint) > 1) {
-            List<Pointt> availablePoints = getAvailablePoints(currentPoint, flaggedPoints);
-            if(availablePoints.isEmpty())
-                return 0;   //target is not reachable
-            Pointt nextMove = getClosestPoint(targetPoint, availablePoints);
-            flaggedPoints.add(currentPoint);
-            currentPoint = nextMove;
-            distance++;
+
+    List<Pointt> findShortestPath(Pointt currentPoint, List<Pointt> path, Unit target) {
+        List<List<Pointt>> paths = new ArrayList<>();
+        path.add(currentPoint);
+        if (this.pos.dist(target.pos)==1)
+            return path;
+        List<Pointt> availablePoints = getAvailablePoints(currentPoint, path);
+        if (availablePoints.isEmpty())
+            return new ArrayList<>();   //DEAD END
+        for (Pointt p : availablePoints) {
+            paths.add(findShortestPath(p, path, target));
         }
-        return distance;
+        int minPathLength = Integer.MAX_VALUE;
+        List<Pointt> shortestPath = new ArrayList<>();
+        for (List<Pointt> p : paths) {
+            if (!p.isEmpty() && p.size() < minPathLength) {
+                shortestPath = p;
+                minPathLength = p.size();
+            }
+        }
+        return shortestPath;
     }
+
+    List<Pointt> findShortestPath(Unit target) {
+        return findShortestPath(this.pos, new ArrayList<>(), target);
+    }
+
+
+//    Integer findPathToOpponent(Unit opponent) {
+//        Integer distance = 0;
+//        Pointt currentPoint = this.pos;
+//        Pointt targetPoint = opponent.pos;
+//        List<Pointt> flaggedPoints = new ArrayList<>();
+//        while (currentPoint.dist(targetPoint) > 1) {
+//            List<Pointt> availablePoints = getAvailablePoints(currentPoint, flaggedPoints);
+//            if(availablePoints.isEmpty())
+//                return 0;   //target is not reachable
+//            Pointt nextMove = getClosestPoint(targetPoint, availablePoints);
+//            flaggedPoints.add(currentPoint);
+//            currentPoint = nextMove;
+//            distance++;
+//        }
+//        return distance;
+//    }
 
     List<Pointt> getAvailablePoints(Pointt p, List<Pointt> flaggedPoints) {
-        int[][] translations = {{1, 0}, {0, -1}, {0, 1}, {-1, 0}};
+        int[][] translations = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
         List<Pointt> availablePoints = new ArrayList<>();
         for (int[] t : translations) {
             Pointt tPoint = new Pointt(p.x + t[1],p.y + t[0]);
@@ -106,18 +134,18 @@ public abstract class Unit {
         return availablePoints;
     }
 
-    Pointt getClosestPoint(Pointt target, List<Pointt> points) {
-        Pointt closestPoint = points.get(0);
-        int minDist = Integer.MAX_VALUE;
-        for (Pointt p : points) {
-            int dist = target.dist(p);
-            if (dist < minDist) {
-                minDist = dist;
-                closestPoint = p;
-            }
-        }
-        return closestPoint;
-    }
+//    Pointt getClosestPoint(Pointt target, List<Pointt> points) {
+//        Pointt closestPoint = points.get(0);
+//        int minDist = Integer.MAX_VALUE;
+//        for (Pointt p : points) {
+//            int dist = target.dist(p);
+//            if (dist < minDist) {
+//                minDist = dist;
+//                closestPoint = p;
+//            }
+//        }
+//        return closestPoint;
+//    }
 
     int compareByPosition(Unit o2) {
         int value1 = this.pos.y - o2.pos.y;

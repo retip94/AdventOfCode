@@ -9,20 +9,21 @@ public class Main {
     static List<Goblin> goblins = new ArrayList<>();
     public static void main(String[] args) {
         drawMap();
+        printMap();
         int roundsCounter = 0;
-        while (roundsCounter < 1) {
+        while (roundsCounter < 2) {
             for (Unit unit : getSortedUnits()) {
                 System.out.println(unit.getInfo());
-                System.out.println(unit.checkForOpponentsToAttack());
                 boolean successfulAttack = unit.tryToAttack();
+                System.out.println("Successful attack - " + successfulAttack);
                 if (!successfulAttack) {
-                    unit.findClosestOpponent(getUnits());
+                    Pointt nextPoint =  unit.tryToMove(getUnits());
+                    System.out.println("moved to: " + nextPoint);
                 }
             }
-
             roundsCounter++;
         }
-        System.out.println(Arrays.deepToString(plan).replace("], ","]\n ").replace(", ",""));
+        printMap();
 
 
     }
@@ -51,6 +52,10 @@ public class Main {
         List<Unit> units = elves;
         units.addAll(goblins);
         return units;
+    }
+
+    static void printMap() {
+        System.out.println(Arrays.deepToString(plan).replace("], ","]\n ").replace(", ",""));
     }
 
 }
