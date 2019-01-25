@@ -4,8 +4,10 @@ import java.util.List;
 
 public class Main {
 //    static String[] input = {"#######", "#.G...#", "#...EG#", "#.#.#G#", "#..G#E#", "#.....#", "#######"};    //result 47*590 = 27730
-    static String[] input = {"#######","#G..#E#","#E#E.E#","#G.##.#","#...#E#","#...E.#","#######"};            //result 37*982 = 36334
-    static char[][] plan = new char[input.length][input[0].length()];
+//    static String[] input = {"#######","#G..#E#","#E#E.E#","#G.##.#","#...#E#","#...E.#","#######"};            //result 37*982 = 36334//FAILED by 1 round
+//    static String[] input = {"#######","#E..EG#","#.#G.E#","#E.##E#","#G..#.#","#..E#.#","#######"};            //result 46*859 = 39514//FAILED by 1 round
+    static String[] input = {"#######","#E.G#.#","#.#G..#","#G.#.G#","#G..#.#","#...E.#","#######"};   //result 35*793 = 27755 //FAILED by 1 round
+static char[][] plan = new char[input.length][input[0].length()];
     static List<Elf> elves = new ArrayList<>();
     static List<Goblin> goblins = new ArrayList<>();
     public static void main(String[] args) {
@@ -15,21 +17,21 @@ public class Main {
         while (!elves.isEmpty() && !goblins.isEmpty()) {
             for (Unit unit : getSortedUnits()) {
                 if(!unit.alive) continue;
-                System.out.println(unit.getInfo());
+//                System.out.println(unit.getInfo());
                 boolean successfulAttack = unit.tryToAttack();
-                System.out.println("Successful attack - " + successfulAttack);
+//                System.out.println("Successful attack - " + successfulAttack);
                 if (!successfulAttack) {
                     Pointt nextPoint =  unit.tryToMove(getUnits());
-                    System.out.println("moved to: " + nextPoint);
+//                    System.out.println("moved to: " + nextPoint);
                     unit.tryToAttack();
                 }
             }
-            printMap();
             roundsCounter++;
             printSummary(roundsCounter);
-            if (roundsCounter == 37) {
+            if (roundsCounter == 36) {
                 System.out.println("breakpoint");
             }
+            printMap();
         }
         int result = getResult(roundsCounter);
         System.out.println(result);

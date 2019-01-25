@@ -44,7 +44,7 @@ public abstract class Unit {
     }
 
     void attack(Unit opponent) {
-        System.out.println("attack " + opponent.race + "(" + opponent.pos.x + "," + opponent.pos.y);
+        System.out.println(this.pos.x+","+this.pos.y+" attack " + opponent.race + "(" + opponent.pos.x + "," + opponent.pos.y);
         opponent.damage(this.attPow);
     }
 
