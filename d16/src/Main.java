@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+
+//TESTING GIT in Intellij IDEA
 public class Main {
     static final int opcode = 0;
     static final int A = 1;
