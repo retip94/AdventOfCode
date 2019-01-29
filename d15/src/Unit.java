@@ -1,14 +1,15 @@
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
 public abstract class Unit {
     Pointt pos;
     int HP;
     int attPow;
     boolean alive;
     String race;
+    char sign;
+    boolean didntMoveLastRound;
 
     Unit(int xPos, int yPos) {
         pos = new Pointt(xPos, yPos);
@@ -16,6 +17,7 @@ public abstract class Unit {
         this.attPow = 3;
         this.alive = true;
         this.race = "";
+        this.didntMoveLastRound = false;
     }
 
 
@@ -23,18 +25,20 @@ public abstract class Unit {
         return race+"     ("+pos.x+","+pos.y+") att:"+attPow+", HP:"+HP;
     }
 
-    List<Unit> checkForOpponentsToAttack() {
+    List<Unit> checkForOpponentsToAttack(Pointt p) {
+        int[][] translations = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
         List<Unit> opponentsToAttack = new ArrayList<>();
-        List<Unit> units = Main.getSortedUnits();
-        for (Unit u : units) {
-            if (this.pos.dist(u.pos) == 1 && !this.race.equals(u.race))
-                opponentsToAttack.add(u);
+        for (int[] t : translations) {
+            Pointt tPoint = new Pointt(p.x + t[1],p.y + t[0]);
+            char c = Main.plan[tPoint.y][tPoint.x];
+            if((c=='G' && this.sign=='E')||(c=='E'&&this.sign=='G'))
+                opponentsToAttack.add(findUnitByPosition(tPoint));
         }
         return opponentsToAttack;
     }
 
     boolean tryToAttack() {
-        List<Unit> opponentsToAttack = checkForOpponentsToAttack();
+        List<Unit> opponentsToAttack = checkForOpponentsToAttack(this.pos);
         if (opponentsToAttack.size() > 0) {
             opponentsToAttack.sort(Unit::compareByHP);
             attack(opponentsToAttack.get(0));
@@ -44,38 +48,81 @@ public abstract class Unit {
     }
 
     void attack(Unit opponent) {
-        System.out.println(this.pos.x+","+this.pos.y+" attack " + opponent.race + "(" + opponent.pos.x + "," + opponent.pos.y);
+//        System.out.println(this.pos.x+","+this.pos.y+" attack " + opponent.race + "(" + opponent.pos.x + "," + opponent.pos.y);
         opponent.damage(this.attPow);
     }
 
     void damage(int damage) {
         this.HP -= damage;
-        if (this.HP <= 0) {
-            this.alive = false;
-            if(Main.elves.contains(this)) Main.elves.remove(this);
-            else Main.goblins.remove(this);
-        }
+        if (this.HP <= 0)
+            this.die();
     }
 
-    Pointt tryToMove(List<Unit> units) {
-        Pointt nextPoint = nextMove(units);
+    void die() {
+        Main.nothingChanged = false;
+        this.alive = false;
+        Main.plan[this.pos.y][this.pos.x] = '.';
+        if(Main.elves.contains(this)) Main.elves.remove(this);
+        else Main.goblins.remove(this);
+    }
+
+    Pointt tryToMove() {
+//        System.out.println(this.getInfo());
+        Pointt nextPoint = nextMove();
+//        if (Main.nothingChanged && this.didntMoveLastRound) {
+//            System.out.println("Running time: " + (double) (System.currentTimeMillis() - runTime) / 1000 + "s");
+//            return nextPoint;
+//        }
+
         if (nextPoint != null) {
+            didntMoveLastRound = false;
+            Main.nothingChanged = false;
+            Main.plan[this.pos.y][this.pos.x] = '.';
             this.pos = nextPoint;
-        }
+            Main.plan[this.pos.y][this.pos.x] = this.sign;
+//            System.out.println("move to: " + nextPoint);
+        } else
+            didntMoveLastRound = true;
         return nextPoint;
     }
 
     @Nullable
-    Pointt nextMove(List<Unit> units) {
+    Pointt nextMove() {
+        HashMap<Pointt, Integer> visited = new HashMap<>();
+        visited.put(this.pos, 0);
         Pointt nextPoint = null;
+        if (Main.nothingChanged && Main.nothingChangedInLastRound && this.didntMoveLastRound)
+            return nextPoint;
         int minDistance = Integer.MAX_VALUE;
-        for (Unit unit : units) {
-            if (!this.race.equals(unit.race)) {
-                List<Pointt> shortestPath = findShortestPath(unit);
-                int distance = shortestPath.size()-1;
-                if (distance !=-1 && distance < minDistance) {
+        List<Pointt> neighborPoints = getAvailablePoints(this.pos);
+        Deque<QueueObj> movesQueue = new LinkedList<>();
+        if (neighborPoints.isEmpty()) {
+            return nextPoint;
+        }
+        for (Pointt neighborPoint : neighborPoints) {
+            movesQueue.add(new QueueObj(neighborPoint,1,neighborPoint));
+//            int distance = findShortestPath(neighborPoint);
+//            if (distance != 0 && distance < minDistance) {
+//                minDistance = distance;
+//                nextPoint = neighborPoint;
+//            }
+        }
+        while (!movesQueue.isEmpty()) {
+            QueueObj currentMove = movesQueue.removeLast();
+            Pointt currentPoint = currentMove.currentPoint;
+            int distance = currentMove.distance;
+            if(distance>minDistance)
+                continue;
+            visited.put(currentPoint, distance);
+            if (!checkForOpponentsToAttack(currentPoint).isEmpty())
+                if (distance < minDistance) {
                     minDistance = distance;
-                    nextPoint = shortestPath.get(1);
+                    nextPoint = currentMove.firstMove;
+                }
+            for (Pointt p : getAvailablePoints(currentPoint)) {
+                Integer existingDistance = visited.get(p);
+                if ((existingDistance == null)||(distance < existingDistance)) {
+                    movesQueue.add(new QueueObj(p, distance + 1, currentMove.firstMove));
                 }
             }
         }
@@ -83,43 +130,67 @@ public abstract class Unit {
     }
 
 
-    List<Pointt> findShortestPath(Pointt currentPoint, List<Pointt> path, Unit target) {
-        List<List<Pointt>> paths = new ArrayList<>();
-        List<Pointt> newPath = new ArrayList<>(path);
+    Set<Pointt> findShortestPath(Pointt currentPoint, Set<Pointt> path) {
+//        System.out.println(System.nanoTime() - Main.timer);
+//        System.out.println(currentPoint);
+//        Main.timer = System.nanoTime();
+        Set<Set<Pointt>> paths = new HashSet<>();
+        Set<Pointt> newPath = new HashSet<>(path);
         newPath.add(currentPoint);
-        if (currentPoint.dist(target.pos)==1)
+        if(!checkForOpponentsToAttack(currentPoint).isEmpty())
             return newPath;
         List<Pointt> availablePoints = getAvailablePoints(currentPoint, newPath);
-        if (availablePoints.isEmpty())
-            return new ArrayList<>();   //DEAD END
+        if (availablePoints.isEmpty()){
+            return new HashSet<>();   //DEAD END}
+        }
         for (Pointt p : availablePoints) {
-            paths.add(findShortestPath(p, newPath, target));
+            paths.add(findShortestPath(p, newPath));
         }
         int minPathLength = Integer.MAX_VALUE;
-        List<Pointt> shortestPath = new ArrayList<>();
-        for (List<Pointt> p : paths) {
+        Set<Pointt> shortestPath = new HashSet<>();
+        for (Set<Pointt> p : paths) {
             if (!p.isEmpty() && p.size() < minPathLength) {
                 shortestPath = p;
                 minPathLength = p.size();
             }
         }
         return shortestPath;
+        }
+
+    int findShortestPath(Pointt firstMove) {
+        Set<Pointt> tempSet = new HashSet<>();
+        tempSet.add(this.pos);
+        return findShortestPath(firstMove, tempSet).size();
     }
 
-    List<Pointt> findShortestPath(Unit target) {
-        return findShortestPath(this.pos, new ArrayList<>(), target);
-    }
-
-    List<Pointt> getAvailablePoints(Pointt p, List<Pointt> flaggedPoints) {
-        int[][] translations = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
+    List<Pointt> getAvailablePoints(Pointt p) {
+        int[][] translations = {{1, 0},{0, 1},{0, -1},{-1, 0}};
         List<Pointt> availablePoints = new ArrayList<>();
         for (int[] t : translations) {
             Pointt tPoint = new Pointt(p.x + t[1],p.y + t[0]);
-            if(Main.plan[tPoint.y][tPoint.x] == '.' && !flaggedPoints.contains(tPoint) && findUnitByPosition(tPoint.y,tPoint.x)==null)
-                availablePoints.add(tPoint);
+            char c = Main.plan[tPoint.y][tPoint.x];
+                if(c=='.')
+                    availablePoints.add(tPoint);
+            }
+        return availablePoints;
+    }
+
+
+    List<Pointt> getAvailablePoints(Pointt p, Set<Pointt> flaggedPoints) {
+//        int[][] translations = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
+        int[][] translations = {{1, 0},{0, 1},{0, -1},{-1, 0}};
+        List<Pointt> availablePoints = new ArrayList<>();
+        for (int[] t : translations) {
+            Pointt tPoint = new Pointt(p.x + t[1],p.y + t[0]);
+            char c = Main.plan[tPoint.y][tPoint.x];
+            if(c != '#' && !flaggedPoints.contains(tPoint)){
+                if((c=='.')||(c=='G' && this.sign=='E')||(c=='E' && this.sign=='G'))
+                    availablePoints.add(tPoint);
+            }
         }
         return availablePoints;
     }
+//    List<Pointt> getAvailablePoints(Pointt p) {return getAvailablePoints(p, new HashSet<>()); }
 
     int compareByPosition(Unit o2) {
         int value1 = this.pos.y - o2.pos.y;
@@ -133,11 +204,26 @@ public abstract class Unit {
         return this.HP - o2.HP;
     }
 
+    int compareByDist(Unit o2, Unit target) {
+        int dist1 = this.pos.dist(target.pos);
+        int dist2 = o2.pos.dist(target.pos);
+        return dist1 - dist2;
+    }
+
     static Unit findUnitByPosition(int y, int x) {
-        List<Unit> units = Main.getUnits();
+        Set<Unit> units = Main.getUnits();
         for (Unit unit : units) {
             if(unit.pos.y==y)
                 if(unit.pos.x==x)
+                    return unit;
+        }
+        return null;
+    }
+    static Unit findUnitByPosition(Pointt p) {
+        Set<Unit> units = Main.getUnits();
+        for (Unit unit : units) {
+            if(unit.pos.y==p.y)
+                if(unit.pos.x==p.x)
                     return unit;
         }
         return null;
@@ -150,6 +236,7 @@ class Elf extends Unit {
     Elf(int xPos, int yPos) {
         super(xPos, yPos);
         super.race = "elf";
+        super.sign = 'E';
     }
 
 }
@@ -158,6 +245,7 @@ class Goblin extends Unit {
     Goblin(int xPos, int yPos) {
         super(xPos, yPos);
         super.race = "goblin";
+        super.sign = 'G';
     }
 
 }
