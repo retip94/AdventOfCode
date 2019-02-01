@@ -13,6 +13,7 @@ public class Main {
     static List<Scan> scans = new ArrayList<>();
     static Point waterSpring = new Point(500, 0);
 
+
     public static void main(String[] args) {
         getInput();
         HashMap<String, Integer> grid = getMinsAndSize();
@@ -22,7 +23,7 @@ public class Main {
     }
 
     static void getInput() {
-        try {
+        try {aea
             Stream<String> textStream = Files.lines(Paths.get("input0.txt"), Charset.forName("UTF-8"));
             textStream.forEach((line) -> scans.add(new Scan(line)));
         } catch (Exception e) {
